@@ -15,10 +15,6 @@ stdexcept
 -
 random
 -
-thread
--
-future
--
 pybind11/pybind11.h
 -
 

@@ -19,7 +19,7 @@ using uint = unsigned int;
 struct LUT4 {
   uint ttable[16];
   uint output=0;
-  LUT4 *inputs[4];
+  LUT4 *inputs[4] = {0,0,0,0};
   uint idx=0;
 };
 
@@ -150,19 +150,55 @@ public:
     return layers.at(layer).at(node).inputs[input]->idx;
   }
 
-  vector<uint> serialiseLayer(uint layerNum) {
-
+  std::vector<uint> serialiseLayer(uint layerNum) {
+    std::vector<uint> data(layers.at(layerNum).size());
+    for (uint node=0; node < data.size(); node++) {
+      uint packedTable=0;
+      for(uint bit=0; bit < 16; bit++) {
+        if (layers[layerNum][node].ttable[bit]) {
+          packedTable |= (1 << (15-bit));
+        }
+      }
+      // std::cout << packedTable << std::endl;
+      data[node] = packedTable;
+    }
+    return data;
   }
 
-  vector<uint> serialiseStructure() {
-
+  std::vector<uint> serialiseStructure() {
+    std::vector<uint> structure;
+    structure.push_back(layers.size());
+    for(uint layer=0; layer < layers.size(); layer++) {
+      structure.push_back(layers[layer].size());
+      if (layer > 0) {
+        for(uint node=0; node < layers[layer].size(); node++) {
+          for(uint inidx=0; inidx < 4; inidx++) {
+            structure.push_back(layers[layer][node].inputs[inidx] -> idx);
+          }
+        }
+      }
+    }
+    return structure;
   }
 
-  vector<uint> serialise() {
-
+  std::vector<uint> serialiseAllLayers() {
+    std::vector<uint> allLayers;
+    //start from layer 1, layer 0 doesn't use inputs / ttables
+    for(uint layer=1; layer < layers.size(); layer++) {
+      auto layerData = serialiseLayer(layer);
+      allLayers.insert(allLayers.end(), layerData.begin(), layerData.end());
+    }
+    return allLayers;
   }
 
-  bool unserialise(vector<uint> &bin) {
+  std::vector<uint> serialiseModel() {
+    auto struc = serialiseStructure();
+    auto ttables = serialiseAllLayers();
+    struc.insert(struc.end(), ttables.begin(), ttables.end());
+    return struc;
+  }
+
+  bool unserialise(std::vector<uint> &bin) {
 
   }
 

@@ -261,6 +261,31 @@ TEST(LUTNETTEST, LayerSizeTest) {
   EXPECT_EQ(net.getLayerCount(),5);
 }
 
+TEST(LUTNETTEST, Serialisation) {
+  FFLUT4Net net(2);
+  net.addLayer(4);
+  net.addLayer(2);
+  auto data = net.serialiseAllLayers();
+  for(int i=0; i < data.size(); i++) {
+    cout << data[i] << ",";
+  }
+  cout << endl;
+  EXPECT_EQ(data.size(),6);
+  auto struc = net.serialiseStructure();
+  for(int i=0; i < struc.size(); i++) {
+    cout << struc[i] << ",";
+  }
+  cout << endl;
+  uint strucSize = 1 + 3 + (4*4) + (2*4);
+  EXPECT_EQ(struc.size(), strucSize);
+  auto alldata = net.serialiseModel();
+  for(int i=0; i < alldata.size(); i++) {
+    cout << alldata[i] << ",";
+  }
+  cout << endl;
+  EXPECT_EQ(alldata.size(), strucSize + 6);
+
+}
 int main(int argc, char **argv) {
     cout << "LUTNet library tests\n";
     ::testing::InitGoogleTest(&argc, argv);
