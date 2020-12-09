@@ -276,7 +276,7 @@ TEST(LUTNETTEST, Serialisation) {
     cout << struc[i] << ",";
   }
   cout << endl;
-  uint strucSize = 1 + 3 + (4*4) + (2*4);
+  uint strucSize = 1 + 3;
   EXPECT_EQ(struc.size(), strucSize);
   auto alldata = net.serialiseModel();
   for(int i=0; i < alldata.size(); i++) {
@@ -286,32 +286,73 @@ TEST(LUTNETTEST, Serialisation) {
   EXPECT_EQ(alldata.size(), strucSize + 6);
 
 }
+
+TEST(LUTNETTEST, SerialiseUnserialisation) {
+  std::srand(std::time(nullptr));
+  uint inCount = 16;
+  uint outCount = 1;
+  for(uint test=0; test < 16; test++) {
+    //init random network and and collect in-out-pairs
+    FFLUT4Net net(inCount);
+    net.addLayer(4);
+    net.addLayer(outCount);
+    auto alldata = net.serialiseModel();
+    cout << "Data 1: ";
+    for(int i=0; i < alldata.size(); i++) {
+      cout << alldata[i] << ",";
+    }
+    cout << endl;
+    vector<vector<uint>> testins;
+    vector<vector<uint>> testouts;
+    for(uint i=0; i < 5; i++) {
+      vector<uint> ins(inCount);
+      vector<uint> outs(outCount);
+      for(uint j=0; j < inCount; j++) {
+        ins[j] = std::rand() > (RAND_MAX/2);
+        cout << ins[j] << ",";
+      }
+      net.calc(ins);
+      cout << " : ";
+
+      for(uint j=0; j < outCount; j++) {
+        outs[j] = net.getTopLayerOutput(j);
+        cout << outs[j] << ",";
+      }
+      cout << endl;
+      testins.push_back(ins);
+      testouts.push_back(outs);
+    }
+
+    //check test data
+    net.unserialise(alldata);
+    auto alldata2 = net.serialiseModel();
+
+    cout << "Data 2: ";
+    for(uint i=0; i < alldata2.size(); i++) {
+      cout << alldata2[i] << ",";
+    }
+    cout << endl;
+    for(uint i=0; i < testins.size(); i++) {
+      net.calc(testins[i]);
+      for(uint j=0; j < inCount; j++) {
+        cout << testins[i][j] << ",";
+      }
+      cout << " : ";
+
+      for(uint j=0; j < outCount; j++) {
+        uint output = net.getTopLayerOutput(j);
+        cout << output << ",";
+        EXPECT_EQ(output, testouts[i][j]);
+      }
+      cout << endl;
+    }
+  }
+
+
+}
 int main(int argc, char **argv) {
     cout << "LUTNet library tests\n";
     ::testing::InitGoogleTest(&argc, argv);
     int res =  RUN_ALL_TESTS();
-//    unsigned int n = std::thread::hardware_concurrency();
-//    std::cout << n << " concurrent threads are supported.\n";
-    //perf testing
-//    clock_t t = clock();
-//    for(int i=0; i < 86; i++) {
-//        ivec x(86);
-//        for(int j=0; j<x.size(); j++) x[j] = rand() % 16;
-//        cout << ETC::calc(x) << endl;
-//    }
-//    const double work_time = (clock() - t) / double(CLOCKS_PER_SEC) * 1000;
-//    cout << work_time << " ms" << endl;
-
-//    ivec test = {0,1,2,3,4,5,6,7,8,9};
-//    int offset=9, dx=2, past=3;
-//    cout << test.subvec(offset-dx-past+1,offset) << endl;
-//    cout << test.subvec(offset-dx-past+1,offset-dx) << endl;
-//    ivec test = {1,2,3,4,5,6,7,8,9};
-//    ivec test2 = {10,11,12,13,14,15};
-//    ivec comb = test.subvec(0,6);
-//    comb(span(4,5)) = test2(span(4,5));
-//    cout << test.t() << endl;
-//    cout << test2.t() << endl;
-//    cout << comb.t() << endl;
     return res;
 }

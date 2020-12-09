@@ -33,14 +33,10 @@ public:
   std::bernoulli_distribution bd{0.5};
 
   FFLUT4Net(uint numInputs) {
-    LUT4Layer inputLayer(numInputs);
-    for(uint i=0; i < numInputs; i++) {
-      inputLayer[i].idx = i;
-    }
-    layers.push_back(inputLayer);
+    addInputLayer(numInputs);
   }
 
-  void addLayer(uint numNodes) {
+  void addLayer(uint numNodes, bool randomiseTtables=true) {
     LUT4Layer newLayer(numNodes);
     //make connections
     uint topLayerNodeCount = layers.back().size();
@@ -57,7 +53,7 @@ public:
       }
       //init ttable
       for(uint i_t=0; i_t < 16; i_t++) {
-        newLayer[i].ttable[i_t] =  bd(mersenne);
+        newLayer[i].ttable[i_t] =  randomiseTtables ? bd(mersenne) : 0;
       }
       //record node idx in layer
       newLayer[i].idx = i;
@@ -155,10 +151,14 @@ public:
     for (uint node=0; node < data.size(); node++) {
       uint packedTable=0;
       for(uint bit=0; bit < 16; bit++) {
-        if (layers[layerNum][node].ttable[bit]) {
+        uint bitValue = layers[layerNum][node].ttable[bit];
+        if (bitValue) {
           packedTable |= (1 << (15-bit));
         }
+        // std::cout << bitValue << "/";
+
       }
+      // std::cout << std::endl;
       // std::cout << packedTable << std::endl;
       data[node] = packedTable;
     }
@@ -170,13 +170,14 @@ public:
     structure.push_back(layers.size());
     for(uint layer=0; layer < layers.size(); layer++) {
       structure.push_back(layers[layer].size());
-      if (layer > 0) {
-        for(uint node=0; node < layers[layer].size(); node++) {
-          for(uint inidx=0; inidx < 4; inidx++) {
-            structure.push_back(layers[layer][node].inputs[inidx] -> idx);
-          }
-        }
-      }
+      //dont actually need to save this because it's calculated when you add a layer
+      // if (layer > 0) {
+      //   for(uint node=0; node < layers[layer].size(); node++) {
+      //     for(uint inidx=0; inidx < 4; inidx++) {
+      //       structure.push_back(layers[layer][node].inputs[inidx] -> idx);
+      //     }
+      //   }
+      // }
     }
     return structure;
   }
@@ -199,11 +200,40 @@ public:
   }
 
   bool unserialise(std::vector<uint> &bin) {
-
+    layers.clear();
+    uint layerCount=bin.at(0);
+    addInputLayer(bin.at(1));
+    for(uint layer=1; layer < layerCount; layer++) {
+      addLayer(bin.at(1+layer), false);
+    }
+    uint pos = layerCount+1;
+    for(uint layer=1; layer < layerCount; layer++) {
+      for(uint node=0; node < layers[layer].size(); node++) {
+        uint ttableValue = bin.at(pos);
+        std::cout << ttableValue << std::endl;
+        pos++;
+        for(uint bit=0; bit < 16; bit++) {
+          uint bitValue = (ttableValue & (1 << (15-bit))) >> (15-bit) ;
+          // std::cout << bitValue << "/";
+          layers[layer][node].ttable[bit] = bitValue;
+        }
+        // std::cout << std::endl;
+      }
+    }
   }
 
 private:
 
   std::vector<LUT4Layer > layers;
 
+  void addInputLayer(uint numInputs) {
+    LUT4Layer inputLayer(numInputs);
+    for(uint i=0; i < numInputs; i++) {
+      inputLayer[i].idx = i;
+      for(uint inIdx=0; inIdx < 4; inIdx++) {
+        inputLayer[i].inputs[inIdx] = 0;
+      }
+    }
+    layers.push_back(inputLayer);
+  }
 };
