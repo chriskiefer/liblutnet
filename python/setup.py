@@ -15,5 +15,5 @@ lutnet = Pybind11Extension  (
 
 setup(
     name='lutnet',
-    version='1.6',
+    version='1.7',
     ext_modules=[lutnet])

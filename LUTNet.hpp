@@ -28,15 +28,21 @@ using LUT4Layer = std::vector<LUT4>;
 
 class FFLUT4Net {
 public:
-  std::random_device rd{};
-  std::mt19937_64 mersenne{rd()};
-  std::bernoulli_distribution bd{0.5};
+
 
   FFLUT4Net(uint numInputs) {
     addInputLayer(numInputs);
   }
 
   void addLayer(uint numNodes, bool randomiseTtables=true) {
+
+    std::random_device rd;
+    std::mt19937_64 mersenne;
+    std::bernoulli_distribution bd;
+
+    mersenne = std::mt19937_64(rd());
+    bd = std::bernoulli_distribution(0.5);
+
     LUT4Layer newLayer(numNodes);
     //make connections
     uint topLayerNodeCount = layers.back().size();
@@ -146,7 +152,7 @@ public:
     return layers.at(layer).at(node).inputs[input]->idx;
   }
 
-  std::vector<uint> serialiseLayer(uint layerNum) {
+  const std::vector<uint> serialiseLayer(uint layerNum) const {
     std::vector<uint> data(layers.at(layerNum).size());
     for (uint node=0; node < data.size(); node++) {
       uint packedTable=0;
@@ -165,7 +171,7 @@ public:
     return data;
   }
 
-  std::vector<uint> serialiseStructure() {
+  const std::vector<uint> serialiseStructure() const {
     std::vector<uint> structure;
     structure.push_back(layers.size());
     for(uint layer=0; layer < layers.size(); layer++) {
@@ -182,7 +188,7 @@ public:
     return structure;
   }
 
-  std::vector<uint> serialiseAllLayers() {
+  const std::vector<uint> serialiseAllLayers() const {
     std::vector<uint> allLayers;
     //start from layer 1, layer 0 doesn't use inputs / ttables
     for(uint layer=1; layer < layers.size(); layer++) {
@@ -192,14 +198,14 @@ public:
     return allLayers;
   }
 
-  std::vector<uint> serialiseModel() {
+  const std::vector<uint> serialiseModel() const {
     auto struc = serialiseStructure();
     auto ttables = serialiseAllLayers();
     struc.insert(struc.end(), ttables.begin(), ttables.end());
     return struc;
   }
 
-  bool unserialise(std::vector<uint> &bin) {
+  void unserialise(std::vector<uint> &bin) {
     layers.clear();
     uint layerCount=bin.at(0);
     addInputLayer(bin.at(1));
@@ -210,7 +216,7 @@ public:
     for(uint layer=1; layer < layerCount; layer++) {
       for(uint node=0; node < layers[layer].size(); node++) {
         uint ttableValue = bin.at(pos);
-        std::cout << ttableValue << std::endl;
+        // std::cout << ttableValue << std::endl;
         pos++;
         for(uint bit=0; bit < 16; bit++) {
           uint bitValue = (ttableValue & (1 << (15-bit))) >> (15-bit) ;
