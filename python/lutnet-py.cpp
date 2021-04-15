@@ -7,9 +7,11 @@
 
 namespace py = pybind11;
 
+using namespace std;
+
 char const* greet()
 {
-   return "greetings, would you like a refridgerator?";
+   return "greetings, would you like a refridgerators?";
 }
 
 PYBIND11_MODULE(lutnet, m) {
@@ -49,11 +51,13 @@ PYBIND11_MODULE(lutnet, m) {
                 //     throw std::runtime_error("Invalid state!");
 
                 /* Create a new C++ instance */
+                cout << "unpickling" << endl;
                 FFLUT4Net p(4);
                 std::vector<uint> data(t.size());
                 for(uint i=0; i < t.size(); i++) {
                   data[i] = t[i].cast<uint>();
                 }
+                cout << "unserialising" << endl;
                 p.unserialise(data);
 
                 return p;
