@@ -8,12 +8,12 @@ print("path: ", os.path.abspath(__file__))
 lutnet = Pybind11Extension  (
     'lutnet',
     sources=['lutnet-py.cpp'],
-    # libraries=['boost_python37-mt','boost_numpy37-mt'],
+    depends=['SLO.hpp', 'LUTNet.hpp'],
     extra_compile_args=['-std=c++11', '-O3', '-DPYTHON_BUILD'],
     include_dirs=['..'],
 )
 
 setup(
     name='lutnet',
-    version='1.8',
+    version='1.95',
     ext_modules=[lutnet])

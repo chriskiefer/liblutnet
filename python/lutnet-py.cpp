@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "LUTNet.hpp"
+#include "SLO.hpp"
 #include <vector>
 
 
@@ -17,6 +18,17 @@ char const* greet()
 PYBIND11_MODULE(lutnet, m) {
     m.doc() = "pybind11 example plugin"; // optional module docstring
     m.def("greet", &greet, "Hello");
+    
+    py::class_<SLO>(m, "SLO")
+    .def(py::init<>())
+    .def("findLayerClusters", &SLO::findLayerClusters);
+
+    py::class_<SLO::cluster>(m, "SLOcluster")
+    // .def(py::init<>())
+    .def_readwrite("inputNodes", &SLO::cluster::inputNodes)
+    .def_readwrite("outputNodes", &SLO::cluster::outputNodes)
+    ;
+
     py::class_<FFLUT4Net>(m, "FFLUT4Net")
     .def(py::init<uint>())
     .def("addLayer",  &FFLUT4Net::addLayer, py::arg("numNodes") = 4, py::arg("randomiseTtables") = true)
